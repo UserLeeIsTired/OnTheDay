@@ -8,7 +8,6 @@ import { router } from 'expo-router'
 import { createUser } from '../../lib/appwrite'
 import { useGlobalContext } from '../../context/GlobalProvider'
 import { getCurrentUser } from '../../lib/appwrite'
-import { ScrollView } from 'react-native-gesture-handler'
 
 const SignUp = () => {
   const [form, setForm] = useState({
