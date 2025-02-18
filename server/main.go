@@ -21,6 +21,10 @@ func main() {
 		CreateDomainOwner(w, r, db)
 	})
 
+	r.Post("/domain-owner/login", func(w http.ResponseWriter, r *http.Request) {
+		Login(w, r, db)
+	})
+
 	r.Get("/domain-owner", func(w http.ResponseWriter, r *http.Request) {
 		GetDomainOwners(w, r, db)
 	})

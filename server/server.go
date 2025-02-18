@@ -11,6 +11,12 @@ type NewDomainOwner struct {
 	Password      string
 }
 
+type LoginBody struct {
+	CompanyDomain string
+	Username      string
+	Password      string
+}
+
 func CreateDomainOwner(w http.ResponseWriter, r *http.Request, db *Database) {
 	var newDomainOwner NewDomainOwner
 	err := json.NewDecoder(r.Body).Decode(&newDomainOwner)
@@ -67,4 +73,38 @@ func GetDomainOwners(w http.ResponseWriter, r *http.Request, db *Database) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+func Login(w http.ResponseWriter, r *http.Request, db *Database) {
+	var loginBody LoginBody
+
+	err := json.NewDecoder(r.Body).Decode(&loginBody)
+
+	if err != nil {
+		return
+	}
+
+	domainOwner, err := db.Login(loginBody.CompanyDomain, loginBody.Username, loginBody.Password)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	responseJSON, err := json.Marshal(domainOwner)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message": "Login successfully",
+		"users":   json.RawMessage(responseJSON),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+
 }
