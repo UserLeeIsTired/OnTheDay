@@ -2,24 +2,55 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 )
 
-func RedisTest() {
-	// Connect to the Redis server
+type Redis struct {
+	client *redis.Client
+}
+
+func NewRedis() *Redis {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "",
 	})
 
-	// Set a key with an expiration time of 1 minute
-	err := rdb.Set(context.Background(), "mykey", "myvalue", 1*time.Minute).Err()
+	return &Redis{client: rdb}
+}
+
+func (r *Redis) CreateKeyWithExpiration(value string) (string, error) {
+	key := uuid.New().String()
+
+	err := r.client.Set(context.Background(), key, value, 1*time.Hour).Err()
 	if err != nil {
-		fmt.Println("Error setting key with expiration:", err)
-		return
+		return "", err
 	}
-	fmt.Println("Set key 'mykey' with value 'myvalue' and expiration time in Redis")
+
+	return key, nil
+}
+
+func (r *Redis) ExtendKeyExpiration(key string) (string, error) {
+	ttlResult, err := r.client.TTL(context.Background(), key).Result()
+	if err != nil {
+		return "", err
+	}
+
+	// If the key exists and has not expired, extend its expiration
+	if ttlResult >= 0 {
+		err := r.client.Expire(context.Background(), key, 1*time.Hour).Err()
+		if err != nil {
+			return "", err
+		}
+	}
+
+	val, err := r.client.Get(context.Background(), key).Result()
+
+	if err != nil {
+		return "", err
+	}
+
+	return val, nil
 }

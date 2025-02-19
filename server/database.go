@@ -69,27 +69,29 @@ func (d *Database) CreateDomainOwner(companyDomain string, username string, pass
 	return result, nil
 }
 
-func (d *Database) Login(companyDomain string, username string, password string) (*DomainOwner, error) {
-	stmt, err := d.db.Prepare("SELECT company_domain, owner_username, created_at FROM otd_domain_owner WHERE company_domain = $1 AND owner_username = $2 AND password_hash = encode(digest($3 || salt, 'sha256'), 'hex')")
+func (d *Database) Login(companyDomain string, username string, password string) (*DomainOwner, int, error) {
+	stmt, err := d.db.Prepare("SELECT uid, company_domain, owner_username, created_at FROM otd_domain_owner WHERE company_domain = $1 AND owner_username = $2 AND password_hash = encode(digest($3 || salt, 'sha256'), 'hex')")
 
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
 
 	defer stmt.Close()
 
 	var domainOwner DomainOwner
 
+	var userId *int
+
 	row := stmt.QueryRow(companyDomain, username, password)
 
-	if err := row.Scan(&domainOwner.CompanyDomain, &domainOwner.Username, &domainOwner.CreatedAt); err != nil {
+	if err := row.Scan(&userId, &domainOwner.CompanyDomain, &domainOwner.Username, &domainOwner.CreatedAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("Invalid credentials")
+			return nil, -1, fmt.Errorf("Invalid credentials")
 		}
-		return nil, err
+		return nil, -1, err
 	}
 
-	return &domainOwner, nil
+	return &domainOwner, *userId, nil
 }
 
 func (d *Database) GetDomainOwners() ([]DomainOwner, error) {

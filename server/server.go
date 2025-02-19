@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type NewDomainOwner struct {
@@ -75,7 +77,7 @@ func GetDomainOwners(w http.ResponseWriter, r *http.Request, db *Database) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func Login(w http.ResponseWriter, r *http.Request, db *Database) {
+func Login(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
 	var loginBody LoginBody
 
 	err := json.NewDecoder(r.Body).Decode(&loginBody)
@@ -84,7 +86,7 @@ func Login(w http.ResponseWriter, r *http.Request, db *Database) {
 		return
 	}
 
-	domainOwner, err := db.Login(loginBody.CompanyDomain, loginBody.Username, loginBody.Password)
+	domainOwner, userId, err := db.Login(loginBody.CompanyDomain, loginBody.Username, loginBody.Password)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -98,9 +100,48 @@ func Login(w http.ResponseWriter, r *http.Request, db *Database) {
 		return
 	}
 
+	sessionId, err := redis.CreateKeyWithExpiration(strconv.Itoa(userId))
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	cookie := http.Cookie{
+		Name:     "sessionId",
+		Value:    sessionId,
+		Expires:  time.Now().Add(1 * time.Hour),
+		HttpOnly: true,
+	}
+
+	http.SetCookie(w, &cookie)
 	response := map[string]interface{}{
 		"message": "Login successfully",
 		"users":   json.RawMessage(responseJSON),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+
+}
+
+func TestAccess(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
+	cookie, err := r.Cookie("sessionId")
+	if err != nil {
+		http.Error(w, "Unauthorized access", http.StatusUnauthorized)
+		return
+	}
+
+	val, err := redis.ExtendKeyExpiration(cookie.Value)
+	if err != nil {
+		http.Error(w, "Cookie has expired", http.StatusUnauthorized)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message": "Welcome back!",
+		"user_id": json.RawMessage(val),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
