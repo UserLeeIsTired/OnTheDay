@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"strconv"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -50,7 +52,7 @@ func (d *Database) Close() {
 }
 
 func (d *Database) CreateDomainOwner(companyDomain string, username string, password string) (string, error) {
-	stmt, err := d.db.Prepare("INSERT INTO otd_domain_owner (company_domain, owner_username, password_hash) VALUES ($1, $2, $3)")
+	stmt, err := d.db.Prepare("INSERT INTO otd_domain_owner (company_domain, owner_username, password_hash) VALUES ($1, $2, $3) RETURNING uid")
 
 	if err != nil {
 		return "", err
@@ -58,15 +60,14 @@ func (d *Database) CreateDomainOwner(companyDomain string, username string, pass
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(companyDomain, username, password)
+	lastInsertedId := -1
+	err = stmt.QueryRow(companyDomain, username, password).Scan(&lastInsertedId)
 
 	if err != nil {
 		return "", err
 	}
 
-	result := "Company domain is created successfully"
-
-	return result, nil
+	return strconv.Itoa(lastInsertedId), nil
 }
 
 func (d *Database) Login(companyDomain string, username string, password string) (*DomainOwner, int, error) {
@@ -114,4 +115,26 @@ func (d *Database) GetDomainOwners() ([]DomainOwner, error) {
 	}
 
 	return domainOwners, nil
+}
+
+func (d *Database) DeleteDomain(uId string) (bool, error) {
+
+	res, err := d.db.Exec("DELETE FROM otd_domain_owner WHERE uId = $1", uId)
+
+	if err != nil {
+		return false, err
+	}
+
+	count, err := res.RowsAffected()
+
+	if err != nil {
+		return false, err
+	}
+
+	if count == 0 {
+		return false, fmt.Errorf("Unsuccessful deletion")
+	}
+
+	return true, nil
+
 }

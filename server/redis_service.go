@@ -32,6 +32,24 @@ func (r *Redis) CreateKeyWithExpiration(value string) (string, error) {
 	return key, nil
 }
 
+func (r *Redis) GetValueByKey(key string) (string, error) {
+	result, err := r.client.Get(context.Background(), key).Result()
+	if err != nil {
+		return "", err
+	}
+	return result, nil
+}
+
+func (r *Redis) DeleteKey(key string) (bool, error) {
+	err := r.client.Del(context.Background(), key).Err()
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (r *Redis) ExtendKeyExpiration(key string) (string, error) {
 	ttlResult, err := r.client.TTL(context.Background(), key).Result()
 	if err != nil {
@@ -46,7 +64,7 @@ func (r *Redis) ExtendKeyExpiration(key string) (string, error) {
 		}
 	}
 
-	val, err := r.client.Get(context.Background(), key).Result()
+	val, err := r.GetValueByKey(key)
 
 	if err != nil {
 		return "", err
