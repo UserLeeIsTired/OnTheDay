@@ -36,14 +36,14 @@ func CreateDomainOwner(w http.ResponseWriter, r *http.Request, db *Database, red
 	uId, err := db.CreateDomainOwner(newDomainOwner.CompanyDomain, newDomainOwner.Username, newDomainOwner.Password)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusConflict)
+		http.Error(w, "Invalid domain name or the company domain has already been used", http.StatusConflict)
 		return
 	}
 
 	sessionId, err := redis.CreateKeyWithExpiration(uId)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Server Error", http.StatusInternalServerError)
 		return
 	}
 
@@ -104,7 +104,7 @@ func Login(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
 	domainOwner, userId, err := db.Login(loginBody.CompanyDomain, loginBody.Username, loginBody.Password)
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "Company domain, username, or password is incorrect", http.StatusUnauthorized)
 		return
 	}
 
