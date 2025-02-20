@@ -35,7 +35,7 @@ export default function Home() {
                   <label htmlFor="password" className="block text-white text-sm font-mono">Password</label>
                   <input type="password" id="password" name="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="mt-1 block w-full px-3 py-2 rounded-md bg-gray-300 text-gray-800" />
                 </div>
-                <button className="w-full bg-[#047eb3] text-white py-2 px-4 rounded-md shadow-sm hover:bg-[#047eb37e] font-mono mt-4">Login</button>
+                <button className={`w-full text-white py-2 px-4 rounded-md font-mono mt-4 ${!form.companyDomain || !form.username || !form.password ? 'cursor-not-allowed bg-gray-600' : 'bg-[#047eb3] hover:bg-[#047eb37e]'}`}>Login</button>
                 <p className="text-center mt-5 font-mono">Do not have an account? <a href='/signup' className="text-[#047eb3] hover:underline">Sign up</a></p>
               </div>
             </div>

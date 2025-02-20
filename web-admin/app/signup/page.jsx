@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 export default function Home() {
   
   const [form, setForm] = useState({
-    companyDomain: 'a',
-    username: 'b',
+    companyDomain: '',
+    username: '',
     password: '',
     confirmPassword: ''
   });
@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <div>
       {
-        showPopUp ? <PopUpWarning companyDomain={form.companyDomain} username={form.username}/> : <></>
+        showPopUp ? <PopUpWarning companyDomain={form.companyDomain} username={form.username} setShowPopUp={setShowPopUp}/> : <></>
       }
       <div className="w-[100%] h-[100%] px-[80px] py-[40px] bg-[#0080B3]">
       <div className="flex">
