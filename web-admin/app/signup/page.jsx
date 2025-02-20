@@ -1,6 +1,7 @@
 "use client"
 
 import PopUpWarning from '@/components/CreateAccountWarning';
+import { createDomainOwner } from '@/service/server';
 import React, { useState } from 'react';
 
 export default function Home() {
@@ -32,12 +33,22 @@ export default function Home() {
     setShowPopUp(true);
   }
 
+  const submitForm = async() => {
+    const response = await createDomainOwner(form.companyDomain, form.username, form.password);
+
+    if (!response){
+      return;
+    }
+
+    console.log(response);
+  }
+
   const [showPopUp, setShowPopUp] = useState(false);
 
   return (
     <div>
       {
-        showPopUp ? <PopUpWarning companyDomain={form.companyDomain} username={form.username} setShowPopUp={setShowPopUp}/> : <></>
+        showPopUp ? <PopUpWarning companyDomain={form.companyDomain} username={form.username} setShowPopUp={setShowPopUp} submitForm={submitForm}/> : <></>
       }
       <div className="w-[100%] h-[100%] px-[80px] py-[40px] bg-[#0080B3]">
       <div className="flex">

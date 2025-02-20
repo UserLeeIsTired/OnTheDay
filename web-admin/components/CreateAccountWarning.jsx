@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const CreateAccountWarning = ({ companyDomain, username, setShowPopUp }) => {
+const CreateAccountWarning = ({ companyDomain, username, setShowPopUp, submitForm }) => {
   const [countdown, setCountdown] = useState(5);
   
   useEffect(() => {
@@ -26,7 +26,7 @@ const CreateAccountWarning = ({ companyDomain, username, setShowPopUp }) => {
         </div>
         <div className="flex justify-center mt-10">
           <button className="bg-gray-600 text-white px-4 py-2 rounded-md mr-20 w-[150px] font-mono hover:bg-white hover:text-black" onClick={() => setShowPopUp(false)}>Cancel</button>
-          <button className= {` text-white px-4 py-2 rounded-md w-[150px] font-mono ${countdown > 0 ? 'bg-gray-600' :'bg-red-500 hover:bg-white hover:text-black'}`} disabled={countdown > 0} onClick={()=>{console.log('ok')}}>Continue {countdown > 0 ? `(${countdown})` : ''}</button>
+          <button className= {` text-white px-4 py-2 rounded-md w-[150px] font-mono ${countdown > 0 ? 'bg-gray-600' :'bg-red-500 hover:bg-white hover:text-black'}`} disabled={countdown > 0} onClick={submitForm}>Continue {countdown > 0 ? `(${countdown})` : ''}</button>
         </div>
       </div>
     </div>
