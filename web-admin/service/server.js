@@ -10,8 +10,11 @@ export const createDomainOwner = async (domainOwner, username, password) => {
     try {
         const response = await fetch(url, {
             method: 'POST',
+            withCredntials: true,
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
+                
             },
             body: JSON.stringify(data)
         });
