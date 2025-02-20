@@ -10,7 +10,6 @@ export const createDomainOwner = async (domainOwner, username, password) => {
     try {
         const response = await fetch(url, {
             method: 'POST',
-            withCredentials: true,
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
@@ -47,7 +46,6 @@ export const Login = async (domainOwner, username, password) => {
     try {
         const response = await fetch(url, {
             method: 'POST',
-            withCredentials: true,
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
