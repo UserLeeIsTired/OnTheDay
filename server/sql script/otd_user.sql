@@ -9,6 +9,7 @@ CREATE TABLE otd_user (
     password_hash VARCHAR(256) NOT NULL,
     salt VARCHAR(256) NOT NULL,
     created_at TIMESTAMP,
+    first_login BOOLEAN NOT NULL DEFAULT TRUE,
 	is_banned BOOLEAN NOT NULL DEFAULT FALSE,
 	CONSTRAINT fk_company_domain FOREIGN KEY (company_domain_id) REFERENCES otd_domain_owner(uid),
 	CONSTRAINT unique_company_domain_username UNIQUE (company_domain_id, username)

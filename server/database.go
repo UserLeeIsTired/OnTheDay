@@ -95,31 +95,29 @@ func (d *Database) Login(companyDomain string, username string, password string)
 	return &domainOwner, *userId, nil
 }
 
-func (d *Database) GetDomainOwners() ([]DomainOwner, error) {
-	rows, err := d.db.Query("SELECT company_domain, owner_username, created_at FROM otd_domain_owner")
+func (d *Database) GetDomainOwner(uId string) (*DomainOwner, error) {
+	stmt, err := d.db.Prepare("SELECT company_domain, owner_username, created_at FROM otd_domain_owner WHERE uid = $1")
+
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
-	var domainOwners []DomainOwner
+	defer stmt.Close()
 
-	for rows.Next() {
-		var domainOwner DomainOwner
+	var domainOwner DomainOwner
 
-		if err := rows.Scan(&domainOwner.CompanyDomain, &domainOwner.Username, &domainOwner.CreatedAt); err != nil {
-			return nil, err
-		}
+	row := stmt.QueryRow(uId)
 
-		domainOwners = append(domainOwners, domainOwner)
+	if err := row.Scan(&domainOwner.CompanyDomain, &domainOwner.Username, &domainOwner.CreatedAt); err != nil {
+		return nil, err
 	}
 
-	return domainOwners, nil
+	return &domainOwner, nil
 }
 
 func (d *Database) DeleteDomain(uId string) (bool, error) {
 
-	res, err := d.db.Exec("DELETE FROM otd_domain_owner WHERE uId = $1", uId)
+	res, err := d.db.Exec("DELETE FROM otd_domain_owner WHERE uid = $1", uId)
 
 	if err != nil {
 		return false, err
@@ -136,5 +134,30 @@ func (d *Database) DeleteDomain(uId string) (bool, error) {
 	}
 
 	return true, nil
+
+}
+
+func (d *Database) CreateDomainUser(companyDomainId string, username string, password string) (string, error) {
+	stmt, err := d.db.Prepare("INSERT INTO otd_user (company_domain_id, username, password_hash) VALUES ($1, $2, $3) RETURNING uid")
+
+	if err != nil {
+		return "", nil
+	}
+
+	defer stmt.Close()
+
+	lastInsertedId := -1
+
+	err = stmt.QueryRow(companyDomainId, username, password).Scan(&lastInsertedId)
+
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.Itoa(lastInsertedId), nil
+
+}
+
+func (d *Database) GetAllDomainUser(uId string) {
 
 }

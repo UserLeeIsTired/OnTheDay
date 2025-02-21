@@ -40,7 +40,7 @@ export default function Home() {
       return;
     }
 
-    console.log(response);
+    // return window.open('/access', '_self');
   }
 
   const [showPopUp, setShowPopUp] = useState(false);
@@ -63,7 +63,7 @@ export default function Home() {
                 <h2 className="text-2xl text-white mb-4 text-center font-mono">Create a new account</h2>
                 <div className="mb-4">
                   <label htmlFor="username" className="block text-white text-sm font-mono">Company Domain</label>
-                  <input type="text" id="username" name="username" value={form.companyDomain} onChange={e => setForm({...form, companyDomain: e.target.value})} className="mt-1 block w-full px-3 py-2 rounded-md bg-gray-300 text-gray-800" placeholder='e.g. otd.example.com'/>
+                  <input type="text" id="company-domain" name="company-domain" value={form.companyDomain} onChange={e => setForm({...form, companyDomain: e.target.value})} className="mt-1 block w-full px-3 py-2 rounded-md bg-gray-300 text-gray-800" placeholder='e.g. otd.example.com'/>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="username" className="block text-white text-sm font-mono">Username</label>
@@ -75,7 +75,7 @@ export default function Home() {
                 </div>
                 <div className="mb-4">
                   <label htmlFor="password" className="block text-white text-sm font-mono">Confirm Password</label>
-                  <input type="password" id="password" name="password" value={form.confirmPassword} onChange={e => setForm({...form, confirmPassword: e.target.value})} className="mt-1 block w-full px-3 py-2 rounded-md bg-gray-300 text-gray-800" />
+                  <input type="password" id="confirm-password" name="confirm-password" value={form.confirmPassword} onChange={e => setForm({...form, confirmPassword: e.target.value})} className="mt-1 block w-full px-3 py-2 rounded-md bg-gray-300 text-gray-800" />
                 </div>
                 <button type="submit" className={`w-full text-white py-2 px-4 rounded-md font-mono mt-4 ${!form.companyDomain || !form.username || !form.password || !form.confirmPassword ? 'cursor-not-allowed bg-gray-600' : 'bg-[#047eb3] hover:bg-[#047eb37e]'}`} onClick={submit}>Sign Up</button>
                 <p className="text-center mt-5 font-mono">Already have an account? <a href="/" className="text-[#047eb3] hover:underline">Login</a></p>

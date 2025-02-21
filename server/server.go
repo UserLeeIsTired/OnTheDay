@@ -19,6 +19,12 @@ type LoginBody struct {
 	Password      string
 }
 
+type NewDomainUser struct {
+	CompanyDomainId string
+	Username        string
+	Password        string
+}
+
 func CreateDomainOwner(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
 	var newDomainOwner NewDomainOwner
 	err := json.NewDecoder(r.Body).Decode(&newDomainOwner)
@@ -50,9 +56,10 @@ func CreateDomainOwner(w http.ResponseWriter, r *http.Request, db *Database, red
 	cookie := http.Cookie{
 		Name:     "sessionId",
 		Value:    sessionId,
-		Expires:  time.Now().Add(1 * time.Hour),
+		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     "/",
-		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteNoneMode,
 	}
 
 	response := map[string]interface{}{
@@ -68,29 +75,44 @@ func CreateDomainOwner(w http.ResponseWriter, r *http.Request, db *Database, red
 	json.NewEncoder(w).Encode(response)
 }
 
-// func GetDomainOwners(w http.ResponseWriter, r *http.Request, db *Database) {
-// 	DomainOwners, err := db.GetDomainOwners()
+func GetDomainOwner(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
+	cookie, err := r.Cookie("sessionId")
 
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	if err != nil {
+		http.Error(w, "Unauthorized access", http.StatusBadRequest)
+		return
+	}
 
-// 	responseJSON, err := json.Marshal(DomainOwners)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
+	uId, err := redis.GetValueByKey(cookie.Value)
 
-// 	response := map[string]interface{}{
-// 		"message": "Domain owners retrieved successfully",
-// 		"users":   json.RawMessage(responseJSON),
-// 	}
+	if err != nil {
+		http.Error(w, "Unauthorized access", http.StatusBadRequest)
+		return
+	}
 
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
-// 	json.NewEncoder(w).Encode(response)
-// }
+	domainOwner, err := db.GetDomainOwner(uId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	responseJSON, err := json.Marshal(domainOwner)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message": "Domain owner retrieved successfully",
+		"users":   json.RawMessage(responseJSON),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+}
 
 func Login(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
 	var loginBody LoginBody
@@ -125,39 +147,17 @@ func Login(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
 	cookie := http.Cookie{
 		Name:     "sessionId",
 		Value:    sessionId,
-		Expires:  time.Now().Add(1 * time.Hour),
+		Expires:  time.Now().Add(24 * time.Hour),
 		Path:     "/",
-		HttpOnly: true,
+		Secure:   false,
+		HttpOnly: false,
+		SameSite: http.SameSiteLaxMode,
 	}
 
 	http.SetCookie(w, &cookie)
 	response := map[string]interface{}{
 		"message": "Login successfully",
 		"users":   json.RawMessage(responseJSON),
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-
-}
-
-func TestAccess(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
-	cookie, err := r.Cookie("sessionId")
-	if err != nil {
-		http.Error(w, "Unauthorized access", http.StatusUnauthorized)
-		return
-	}
-
-	val, err := redis.ExtendKeyExpiration(cookie.Value)
-	if err != nil {
-		http.Error(w, "Cookie has expired", http.StatusUnauthorized)
-		return
-	}
-
-	response := map[string]interface{}{
-		"message": "Welcome back!",
-		"user_id": json.RawMessage(val),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -193,7 +193,8 @@ func Logout(w http.ResponseWriter, r *http.Request, redis *Redis) {
 		Value:    "",
 		Expires:  time.Unix(0, 0),
 		Path:     "/",
-		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteNoneMode,
 	}
 
 	http.SetCookie(w, &remove)
@@ -231,5 +232,60 @@ func DeleteDomain(w http.ResponseWriter, r *http.Request, db *Database, redis *R
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+
+}
+
+func CreateDomainUser(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
+
+	cookie, err := r.Cookie("sessionId")
+
+	if err != nil {
+		http.Error(w, "Unauthorized access", http.StatusBadRequest)
+		return
+	}
+
+	uId, err := redis.GetValueByKey(cookie.Value)
+
+	if err != nil {
+		http.Error(w, "Unauthorized access", http.StatusBadRequest)
+		return
+	}
+
+	var newDomainUser NewDomainUser
+	err = json.NewDecoder(r.Body).Decode(&newDomainUser)
+
+	if err != nil {
+		http.Error(w, "Request error", http.StatusBadRequest)
+		return
+	}
+
+	newDomainUser.CompanyDomainId = uId
+
+	if len(newDomainUser.Password) < 8 {
+		http.Error(w, "The password must contain at least 8 characters", http.StatusBadRequest)
+		return
+	}
+
+	lastInsertedId, err := db.CreateDomainUser(newDomainUser.CompanyDomainId, newDomainUser.Username, newDomainUser.Password)
+
+	if err != nil {
+		http.Error(w, "Username has been used in the domain", http.StatusBadRequest)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message":  "New user is created successfully",
+		"user_id":  json.RawMessage(lastInsertedId),
+		"username": json.RawMessage(newDomainUser.Username),
+		"password": json.RawMessage(newDomainUser.Password),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
+
+}
+
+func GetAllDomainUser(w http.ResponseWriter, r *http.Request, db *Database, redis *Redis) {
 
 }

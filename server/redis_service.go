@@ -37,6 +37,13 @@ func (r *Redis) GetValueByKey(key string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	err = r.ExtendKeyExpiration(key)
+
+	if err != nil {
+		return "", err
+	}
+
 	return result, nil
 }
 
@@ -50,25 +57,19 @@ func (r *Redis) DeleteKey(key string) (bool, error) {
 	return true, nil
 }
 
-func (r *Redis) ExtendKeyExpiration(key string) (string, error) {
+func (r *Redis) ExtendKeyExpiration(key string) error {
 	ttlResult, err := r.client.TTL(context.Background(), key).Result()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// If the key exists and has not expired, extend its expiration
 	if ttlResult >= 0 {
 		err := r.client.Expire(context.Background(), key, 1*time.Hour).Err()
 		if err != nil {
-			return "", err
+			return err
 		}
 	}
 
-	val, err := r.GetValueByKey(key)
-
-	if err != nil {
-		return "", err
-	}
-
-	return val, nil
+	return nil
 }

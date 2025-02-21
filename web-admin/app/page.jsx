@@ -29,7 +29,7 @@ export default function Home() {
       return;
     }
 
-    console.log(response);
+    // return window.open('/access', '_self');
   }
 
 
@@ -48,7 +48,7 @@ export default function Home() {
                 <h2 className="text-2xl text-white mb-4 text-center font-mono">Welcome Back</h2>
                 <div className="mb-4">
                   <label htmlFor="username" className="block text-white text-sm font-mono">Company Domain</label>
-                  <input type="text" id="username" name="username" value={form.companyDomain} onChange={e => setForm({...form, companyDomain: e.target.value})} className="mt-1 block w-full px-3 py-2 rounded-md bg-gray-300 text-gray-800" />
+                  <input type="text" id="company-domain" name="company-domain" value={form.companyDomain} onChange={e => setForm({...form, companyDomain: e.target.value})} className="mt-1 block w-full px-3 py-2 rounded-md bg-gray-300 text-gray-800" />
                 </div>
                 <div className="mb-4">
                   <label htmlFor="username" className="block text-white text-sm font-mono">Username</label>

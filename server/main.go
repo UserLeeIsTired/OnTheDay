@@ -47,7 +47,7 @@ func main() {
 	// })
 
 	r.Get("/domain-owner/access", func(w http.ResponseWriter, r *http.Request) {
-		TestAccess(w, r, db, redis)
+		GetDomainOwner(w, r, db, redis)
 	})
 
 	r.Delete("/domain-owner", func(w http.ResponseWriter, r *http.Request) {
